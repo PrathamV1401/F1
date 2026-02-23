@@ -1,16 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configure the Streamlit page to look more like a native app
 st.set_page_config(page_title="F1 Reflex Timer", layout="wide")
 
-# Hide standard Streamlit header and footer for a cleaner look
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
-        /* Remove padding to let the game take the full screen */
         .block-container {
             padding-top: 0rem;
             padding-bottom: 0rem;
@@ -18,7 +15,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# The updated HTML, CSS (with mobile support), and JS
 html_content = """
 <!DOCTYPE html>
 <html lang="en">
@@ -27,6 +23,7 @@ html_content = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>F1 Reaction Timer</title>
     <style>
+        /* Added outline: none to prevent an ugly blue border when focused */
         body {
             margin: 0;
             height: 95vh;
@@ -38,81 +35,24 @@ html_content = """
             background-color: #fff;
             user-select: none; 
             cursor: pointer;
-            overflow: hidden; /* Prevent scrolling on mobile */
+            overflow: hidden;
+            outline: none; 
         }
 
-        .lights-board {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+        .lights-board { display: flex; gap: 15px; margin-bottom: 20px; }
+        .light-column { background-color: #111; padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .light { width: 60px; height: 60px; border-radius: 50%; background-color: #333; transition: background-color 0.05s; }
+        .light.red { background-color: #ff0000; box-shadow: 0 0 20px #ff0000; }
+        .message { font-size: 1.2rem; color: #555; height: 24px; text-align: center; padding: 0 10px; }
+        .timer-display { font-size: 8rem; font-weight: normal; margin: 10px 0; height: 150px; display: flex; align-items: center; justify-content: center; }
+        .stats { font-size: 1rem; color: #333; }
 
-        .light-column {
-            background-color: #111;
-            padding: 10px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .light {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #333;
-            transition: background-color 0.05s;
-        }
-
-        .light.red {
-            background-color: #ff0000;
-            box-shadow: 0 0 20px #ff0000;
-        }
-
-        .message {
-            font-size: 1.2rem;
-            color: #555;
-            height: 24px;
-            text-align: center;
-            padding: 0 10px;
-        }
-
-        .timer-display {
-            font-size: 8rem;
-            font-weight: normal;
-            margin: 10px 0;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stats {
-            font-size: 1rem;
-            color: #333;
-        }
-
-        /* --- MOBILE SCREEN SUPPORT --- */
         @media (max-width: 600px) {
-            .lights-board {
-                gap: 8px;
-            }
-            .light-column {
-                padding: 6px;
-                gap: 6px;
-                border-radius: 8px;
-            }
-            .light {
-                width: 45px;
-                height: 45px;
-            }
-            .timer-display {
-                font-size: 5rem;
-                height: 100px;
-            }
-            .message {
-                font-size: 1rem;
-            }
+            .lights-board { gap: 8px; }
+            .light-column { padding: 6px; gap: 6px; border-radius: 8px; }
+            .light { width: 45px; height: 45px; }
+            .timer-display { font-size: 5rem; height: 100px; }
+            .message { font-size: 1rem; }
         }
         
         @media (max-width: 380px) {
@@ -121,14 +61,19 @@ html_content = """
         }
     </style>
 </head>
-<body>
+<body tabindex="0">
 
     <div class="lights-board" id="lights-board"></div>
-    <div class="message" id="message">Tap, click, or press SPACE when ready.</div>
+    <div class="message" id="message">Click here once, then press SPACE when ready.</div>
     <div class="timer-display" id="timer-display">00.000</div>
     <div class="stats">Your best: <span id="best-time">00.000</span></div>
 
     <script>
+        // --- NEW: Focus Management for Streamlit IFrames ---
+        window.onload = () => window.focus();
+        document.body.addEventListener('mouseenter', () => window.focus());
+        document.body.addEventListener('click', () => window.focus());
+
         const board = document.getElementById('lights-board');
         const timerDisplay = document.getElementById('timer-display');
         const messageDisplay = document.getElementById('message');
@@ -154,15 +99,12 @@ html_content = """
         }
 
         function turnOffAllLights() {
-            document.querySelectorAll('.light.red').forEach(light => {
-                light.classList.remove('red');
-            });
+            document.querySelectorAll('.light.red').forEach(light => light.classList.remove('red'));
             activeColumns = 0;
         }
 
         function turnOnColumn(colIndex) {
-            const lights = document.querySelectorAll(`.light[data-col="${colIndex}"]`);
-            lights.forEach(light => light.classList.add('red'));
+            document.querySelectorAll(`.light[data-col="${colIndex}"]`).forEach(light => light.classList.add('red'));
         }
 
         function clearAllTimeouts() {
@@ -251,5 +193,4 @@ html_content = """
 </html>
 """
 
-# Render the HTML inside the Streamlit appp
 components.html(html_content, height=800, scrolling=False)
