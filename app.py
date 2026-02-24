@@ -23,7 +23,7 @@ html_content = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>F1 Reaction Timer</title>
     <style>
-        /* Added outline: none to prevent an ugly blue border when focused */
+        /* --- BASE STYLES (LIGHT MODE) --- */
         body {
             margin: 0;
             height: 95vh;
@@ -32,27 +32,65 @@ html_content = """
             align-items: center;
             justify-content: center;
             font-family: Arial, sans-serif;
-            background-color: #fff;
+            background-color: #ffffff;
+            color: #000000;
             user-select: none; 
             cursor: pointer;
             overflow: hidden;
             outline: none; 
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .lights-board { display: flex; gap: 15px; margin-bottom: 20px; }
         .light-column { background-color: #111; padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; }
         .light { width: 60px; height: 60px; border-radius: 50%; background-color: #333; transition: background-color 0.05s; }
         .light.red { background-color: #ff0000; box-shadow: 0 0 20px #ff0000; }
-        .message { font-size: 1.2rem; color: #555; height: 24px; text-align: center; padding: 0 10px; }
+        .message { font-size: 1.2rem; color: #555; height: 24px; text-align: center; padding: 0 10px; transition: color 0.3s; }
         .timer-display { font-size: 8rem; font-weight: normal; margin: 10px 0; height: 150px; display: flex; align-items: center; justify-content: center; }
-        .stats { font-size: 1rem; color: #333; }
+        .stats { font-size: 1rem; color: #333; transition: color 0.3s; }
 
+        /* --- THEME TOGGLE BUTTON --- */
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            background-color: #f0f0f0;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        .theme-toggle:hover { background-color: #e0e0e0; }
+
+        /* --- DARK MODE STYLES --- */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        body.dark-mode .message { color: #aaaaaa; }
+        body.dark-mode .stats { color: #dddddd; }
+        body.dark-mode .theme-toggle {
+            background-color: #333333;
+            color: #ffffff;
+            box-shadow: 0 2px 5px rgba(255,255,255,0.1);
+        }
+        body.dark-mode .theme-toggle:hover { background-color: #444444; }
+        /* Make the "off" lights slightly darker so they blend better in dark mode */
+        body.dark-mode .light { background-color: #222222; }
+
+        /* --- MOBILE SCREEN SUPPORT --- */
         @media (max-width: 600px) {
             .lights-board { gap: 8px; }
             .light-column { padding: 6px; gap: 6px; border-radius: 8px; }
             .light { width: 45px; height: 45px; }
             .timer-display { font-size: 5rem; height: 100px; }
             .message { font-size: 1rem; }
+            .theme-toggle { top: 10px; right: 10px; padding: 6px 12px; font-size: 0.9rem; }
         }
         
         @media (max-width: 380px) {
@@ -63,17 +101,32 @@ html_content = """
 </head>
 <body tabindex="0">
 
+    <button id="theme-toggle" class="theme-toggle">🌙 Dark</button>
+
     <div class="lights-board" id="lights-board"></div>
     <div class="message" id="message">Click here once, then press SPACE when ready.</div>
     <div class="timer-display" id="timer-display">00.000</div>
     <div class="stats">Your best: <span id="best-time">00.000</span></div>
 
     <script>
-        // --- NEW: Focus Management for Streamlit IFrames ---
         window.onload = () => window.focus();
         document.body.addEventListener('mouseenter', () => window.focus());
-        document.body.addEventListener('click', () => window.focus());
 
+        // --- THEME TOGGLE LOGIC ---
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', (e) => {
+            // CRITICAL: Stop the click from bubbling down to the body and triggering the game!
+            e.stopPropagation(); 
+            
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                themeToggle.textContent = '☀️ Light';
+            } else {
+                themeToggle.textContent = '🌙 Dark';
+            }
+        });
+
+        // --- GAME LOGIC ---
         const board = document.getElementById('lights-board');
         const timerDisplay = document.getElementById('timer-display');
         const messageDisplay = document.getElementById('message');
